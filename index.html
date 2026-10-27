@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operação Contratação Língua Viva</title>
+<style>
+:root{--felt:#14342e;--felt2:#1c4a41;--ink:#0d211d;--chalk:#f2efe6;--brass:#d4a72c;--mute:#9fb5ae;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--felt);color:var(--chalk);font:16px/1.5 "Trebuchet MS",Verdana,sans-serif;padding:16px;max-width:760px;margin-inline:auto}
+h1{font:700 1.7rem/1.15 Georgia,serif;margin:8px 0 4px}
+h2{font:700 1.15rem Georgia,serif;margin:0 0 10px;color:var(--brass)}
+.sub{color:var(--mute);margin:0 0 14px}
+nav{display:flex;gap:8px;margin-bottom:14px}nav button{flex:1}
+button,select,input{font:inherit;color:var(--chalk);background:var(--ink);border:2px solid var(--felt2);border-radius:8px;padding:9px 10px}
+button{cursor:pointer;font-weight:700}
+button.on,button.pri{background:var(--brass);color:var(--ink);border-color:var(--brass)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--chalk);outline-offset:2px}
+section{background:var(--felt2);border-radius:14px;padding:16px;margin-bottom:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.9rem;color:var(--mute)}
+.g{display:grid;grid-template-columns:1fr 84px 84px;gap:8px;align-items:center;margin-bottom:6px}
+.g select{width:100%}
+.tag{font-size:.85rem;color:var(--mute)}
+.chk{display:flex;gap:10px;align-items:center;padding:5px 0}.chk input{width:20px;height:20px}
+table{width:100%;border-collapse:collapse}th,td{padding:8px 5px;text-align:left;border-bottom:1px solid var(--felt)}
+th{color:var(--mute);font-weight:600;font-size:.85rem}
+.pos{font:700 1.4rem Georgia,serif;color:var(--brass)}.win td{background:rgba(212,167,44,.18)}
+.big{font:700 1.2rem Georgia,serif}
+.ab{display:flex;gap:10px}.ab div{flex:1;background:var(--ink);border-radius:10px;padding:12px;text-align:center}
+.ab b{display:block;font:700 2rem Georgia,serif;color:var(--brass)}
+.msg{color:var(--brass);min-height:1.4em}.hide{display:none}.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<h1>Operação Contratação Língua Viva</h1>
+<p class="sub" id="modo">Grupo 6 · Gestão de Pessoas II</p>
+<nav>
+  <button id="t1" class="on" onclick="tab(1)">Jogador</button>
+  <button id="t2" onclick="tab(2)">Mestre</button>
+  <button id="t3" onclick="tab(3)">Placar</button>
+</nav>
+
+<div id="v1">
+<section>
+  <h2>Minhas notas</h2>
+  <div class="row">
+    <label>Mesa <select id="pm"></select></label>
+    <label>Seu nome (opcional) <input id="pn" maxlength="30"></label>
+  </div>
+  <p class="tag">Dê as notas de 1 a 5 sozinho, sem conversar com a mesa. Use a escala da ficha.</p>
+  <div class="g tag"><span>Competência</span><span>Nota A</span><span>Nota B</span></div>
+  <div id="notas"></div>
+  <p class="big" id="pt"></p>
+  <button class="pri" onclick="sendP()">Enviar minhas notas</button>
+  <p class="msg" id="pmsg"></p>
+</section>
+</div>
+
+<div id="v2" class="hide">
+<section>
+  <h2>Decisão da mesa</h2>
+  <div class="row">
+    <label>Mesa <select id="mm" onchange="loadM()"></select></label>
+    <label>Vaga <select id="vaga" onchange="drawComps()"><option value="prof">Professor(a) de idiomas</option><option value="atend">Atendente de unidade</option></select></label>
+    <label>Mestre <input id="mestre" maxlength="30"></label>
+  </div>
+  <p class="tag">Marque as 3 competências que a mesa escolheu. Só as comportamentais pontuam.</p>
+  <div id="comps"></div>
+  <div class="chk"><input type="checkbox" id="star"><label for="star" style="color:var(--chalk)">As perguntas seguiram situação, ação e resultado</label></div>
+  <div class="row">
+    <label>Candidato escolhido <select id="dec"><option value="">Escolher</option><option>A</option><option>B</option></select></label>
+  </div>
+  <label>Evidência que mais pesou <input id="evid" maxlength="120"></label>
+  <div class="row" style="margin-top:12px"><button class="pri" onclick="sendM()">Registrar decisão da mesa</button></div>
+  <p class="msg" id="mmsg"></p>
+</section>
+<section>
+  <h2>Jogadores desta mesa (ao vivo)</h2>
+  <div id="pl"></div>
+  <p class="big" id="mres"></p>
+</section>
+</div>
+
+<div id="v3" class="hide">
+<section>
+  <h2>Ranking das mesas</h2>
+  <div class="scroll"><table><thead><tr><th>#</th><th>Mesa</th><th>Vaga</th><th>Jog.</th><th>A</th><th>B</th><th>Escolha</th><th>Pts</th></tr></thead><tbody id="rank"></tbody></table></div>
+  <p id="champ" class="big" style="margin-top:12px"></p>
+  <div class="row"><button onclick="csv()">Baixar CSV</button><button onclick="reset()">Zerar jogo</button></div>
+</section>
+<section>
+  <h2>Efeito halo na turma</h2>
+  <div class="ab"><div>Mesas que escolheram A<br><small>forte no currículo</small><b id="ca">0</b></div><div>Mesas que escolheram B<br><small>forte nas respostas</small><b id="cb">0</b></div></div>
+  <p id="pj" class="tag" style="margin-top:10px"></p><p id="halo"></p>
+</section>
+</div>
+
+<script>
+/* Cole aqui o endereço do Firebase Realtime Database (veja o README). Vazio = modo local, um aparelho só. */
+const DB_URL="";
+const SALA=(new URLSearchParams(location.search).get("sala")||"grupo6").replace(/[^a-z0-9_-]/gi,"").slice(0,30)||"grupo6";
+const COMPS={
+ prof:[["Domínio de ensino de idiomas",0],["Orientação ao aluno",1],["Comunicação",1],["Trabalho em equipe",1],["Adaptabilidade",1]],
+ atend:[["Sistemas e tabela de preços",0],["Empatia e escuta ativa",1],["Resolução de problemas",1],["Proatividade",1],["Comunicação",1]]};
+const VAGA={prof:"Professor(a)",atend:"Atendente"};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const K="lv-g6-"+SALA;
+let T={mesas:{},jog:{}},cur=1,timer=null;
+
+/* Camada de dados: Firebase (REST) ou localStorage */
+async function getAll(){
+  if(DB_URL){const r=await fetch(`${DB_URL.replace(/\/$/,"")}/salas/${SALA}.json`);const d=await r.json();return d||{}}
+  try{return JSON.parse(localStorage.getItem(K)||"{}")}catch(e){return{}}
+}
+async function put(path,val){
+  if(DB_URL){await fetch(`${DB_URL.replace(/\/$/,"")}/salas/${SALA}/${path}.json`,{method:val===null?"DELETE":"PUT",body:val===null?undefined:JSON.stringify(val)});return}
+  const d=await getAll();const p=path.split("/");let o=d;
+  p.slice(0,-1).forEach(k=>o=o[k]=o[k]||{});
+  if(val===null)delete o[p.at(-1)];else o[p.at(-1)]=val;
+  try{localStorage.setItem(K,JSON.stringify(d))}catch(e){}
+}
+async function refresh(){try{const d=await getAll();T={mesas:d.mesas||{},jog:d.jog||{}}}catch(e){}if(cur==2)drawPl();if(cur==3)board()}
+$("modo").textContent=DB_URL?`Sala ${SALA} · conectado ao placar ao vivo`:"Modo local: dados só neste aparelho (configure o Firebase para jogar com todos)";
+
+for(let i=1;i<=6;i++){$("pm").add(new Option("Mesa "+i,i));$("mm").add(new Option("Mesa "+i,i))}
+function tab(k){cur=k;[1,2,3].forEach(i=>{$("v"+i).classList.toggle("hide",i!=k);$("t"+i).classList.toggle("on",i==k)});clearInterval(timer);if(k>1){refresh();timer=setInterval(refresh,3000)}}
+
+/* Jogador */
+const sel=()=>`<select><option value="">-</option>${[1,2,3,4,5].map(n=>`<option>${n}</option>`).join("")}</select>`;
+$("notas").innerHTML=[1,2,3].map(i=>`<div class="g"><span>Competência ${i}</span>${sel()}${sel()}</div>`).join("");
+const ss=[...document.querySelectorAll("#notas select")];
+ss.forEach(s=>s.onchange=ptot);
+function ptot(){
+  const a=ss.filter((s,i)=>i%2==0).map(s=>+s.value),b=ss.filter((s,i)=>i%2==1).map(s=>+s.value);
+  const ok=ss.every(s=>s.value);const sa=a.reduce((x,y)=>x+y,0),sb=b.reduce((x,y)=>x+y,0);
+  $("pt").textContent=ok?`Total A: ${sa} · Total B: ${sb} · Você escolheria ${sa>sb?"A":sb>sa?"B":"nenhum (empate)"}`:"";
+  return ok?{a:sa,b:sb}:null;
+}
+function pid(){let i=localStorage.getItem("lv-id");if(!i){i=Math.random().toString(36).slice(2,10);localStorage.setItem("lv-id",i)}return i}
+async function sendP(){
+  const t=ptot();if(!t){$("pmsg").textContent="Preencha as 6 notas antes de enviar.";return}
+  const n=$("pm").value;
+  await put(`jog/${n}/${pid()}`,{nome:$("pn").value.trim(),a:t.a,b:t.b});
+  $("pmsg").textContent=`Enviado para a mesa ${n}. Se mudar de ideia, ajuste as notas e envie de novo.`;
+}
+
+/* Mestre */
+function drawComps(sel=[]){
+  $("comps").innerHTML=COMPS[$("vaga").value].map((c,i)=>`<div class="chk"><input type="checkbox" id="c${i}" ${sel.includes(c[0])?"checked":""}><label for="c${i}" style="color:var(--chalk)">${esc(c[0])} <span class="tag">${c[1]?"comportamental":"técnica (não pontua)"}</span></label></div>`).join("");
+}
+function loadM(){
+  const m=T.mesas[$("mm").value];
+  if(m){$("vaga").value=m.vaga;$("mestre").value=m.mestre||"";$("star").checked=!!m.star;$("dec").value=m.dec;$("evid").value=m.evid||"";drawComps(m.comps||[])}
+  else{$("star").checked=false;$("dec").value="";$("evid").value="";drawComps()}
+  drawPl();
+}
+function score(n){
+  const m=T.mesas[n];if(!m)return null;
+  const pl=Object.values(T.jog[n]||{});
+  const sa=pl.reduce((s,p)=>s+(+p.a||0),0),sb=pl.reduce((s,p)=>s+(+p.b||0),0);
+  const beh=COMPS[m.vaga].filter(c=>c[1]&&(m.comps||[]).includes(c[0])).length;
+  const top=sa>sb?"A":sb>sa?"B":"";
+  const c=Math.min(beh,3),s=m.star?2:0,al=m.dec&&m.dec===top?3:0;
+  return{m,n:+n,np:pl.length,sa,sb,c,s,al,total:c+s+al};
+}
+function drawPl(){
+  const n=$("mm").value,pl=Object.values(T.jog[n]||{});
+  $("pl").innerHTML=pl.length?pl.map(p=>`<div class="chk">${esc(p.nome||"Jogador")} <span class="tag">A ${p.a} · B ${p.b} · escolhe ${p.a>p.b?"A":p.b>p.a?"B":"-"}</span></div>`).join(""):`<p class="tag">Nenhum jogador enviou notas para esta mesa ainda.</p>`;
+  const r=score(n);
+  $("mres").textContent=pl.length?`Soma A: ${pl.reduce((s,p)=>s+p.a,0)} · Soma B: ${pl.reduce((s,p)=>s+p.b,0)}${r?` · Pontos da mesa: ${r.total} de 8`:""}`:"";
+}
+async function sendM(){
+  if(!$("dec").value){$("mmsg").textContent="Escolha o candidato da mesa.";return}
+  const v=$("vaga").value,n=$("mm").value;
+  const comps=COMPS[v].filter((c,i)=>$("c"+i).checked).map(c=>c[0]);
+  await put(`mesas/${n}`,{vaga:v,mestre:$("mestre").value.trim(),comps,star:$("star").checked,dec:$("dec").value,evid:$("evid").value.trim()});
+  await refresh();$("mmsg").textContent=`Mesa ${n} registrada.`;
+}
+
+/* Placar */
+function rows(){return Object.keys(T.mesas).map(score).filter(Boolean).sort((x,y)=>y.total-x.total||y.al-x.al||y.s-x.s||x.n-y.n)}
+function board(){
+  const R=rows();let pos=0,prev=null;
+  $("rank").innerHTML=R.length?R.map((x,i)=>{if(x.total!==prev){pos=i+1;prev=x.total}
+    return `<tr class="${pos==1?"win":""}"><td class="pos">${pos}</td><td>${x.n}</td><td>${VAGA[x.m.vaga]}</td><td>${x.np}</td><td>${x.sa}</td><td>${x.sb}</td><td>${esc(x.m.dec)}</td><td><b>${x.total}</b></td></tr>`}).join(""):`<tr><td colspan="8">Aguardando as mesas registrarem a decisão.</td></tr>`;
+  const top=R.filter(x=>x.total===R[0].total);
+  $("champ").textContent=R.length?(top.length>1?`Empate na liderança: mesas ${top.map(x=>x.n).join(", ")} (${top[0].total} pontos)`:`Mesa vencedora: Mesa ${top[0].n} com ${top[0].total} pontos`):"";
+  const ca=R.filter(x=>x.m.dec==="A").length,cb=R.filter(x=>x.m.dec==="B").length;
+  $("ca").textContent=ca;$("cb").textContent=cb;
+  let pa=0,pb=0;Object.values(T.jog).forEach(m=>Object.values(m).forEach(p=>{if(p.a>p.b)pa++;if(p.b>p.a)pb++}));
+  $("pj").textContent=`Jogadores que pontuaram A acima de B: ${pa}. Jogadores que pontuaram B acima de A: ${pb}.`;
+  $("halo").textContent=R.length?(ca>cb?"A maioria das mesas escolheu o currículo mais forte. O efeito halo apareceu: uma qualidade contaminou a avaliação das outras.":cb>ca?"A maioria das mesas escolheu pelas respostas. Os critérios venceram a primeira impressão.":"Mesas divididas: metade seguiu o currículo, metade seguiu as evidências."):"";
+}
+function csv(){
+  const R=rows();if(!R.length)return;
+  const q=s=>'"'+String(s??"").replace(/"/g,'""')+'"';
+  const L=["mesa,vaga,mestre,jogadores,soma_A,soma_B,escolha,competencias,star,alinhada,total,evidencia"];
+  R.forEach(x=>L.push([x.n,VAGA[x.m.vaga],q(x.m.mestre),x.np,x.sa,x.sb,x.m.dec,x.c,x.s,x.al,x.total,q(x.m.evid)].join(",")));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+L.join("\n")],{type:"text/csv"}));a.download="placar-grupo6.csv";a.click();
+}
+async function reset(){if(confirm("Apagar todas as notas e decisões desta sala?")){await put("mesas",null);await put("jog",null);await refresh()}}
+drawComps();refresh();
+</script>
+</body>
+</html>
