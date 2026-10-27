@@ -98,7 +98,7 @@ th{color:var(--mute);font-weight:600;font-size:.85rem}
 
 <script>
 /* Cole aqui o endereço do Firebase Realtime Database (veja o README). Vazio = modo local, um aparelho só. */
-const DB_URL="";
+const DB_URL="https://lingua-viva-c4bb5-default-rtdb.firebaseio.com";
 const SALA=(new URLSearchParams(location.search).get("sala")||"grupo6").replace(/[^a-z0-9_-]/gi,"").slice(0,30)||"grupo6";
 const COMPS={
  prof:[["Domínio de ensino de idiomas",0],["Orientação ao aluno",1],["Comunicação",1],["Trabalho em equipe",1],["Adaptabilidade",1]],
