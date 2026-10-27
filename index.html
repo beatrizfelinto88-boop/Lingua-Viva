@@ -41,6 +41,15 @@ th{color:var(--mute);font-weight:600;font-size:.85rem}
   <button id="t3" onclick="tab(3)">Placar</button>
 </nav>
 
+<div id="lock" class="hide">
+<section>
+  <h2>Área do mestre</h2>
+  <p class="tag">Digite o código para entrar.</p>
+  <div class="row"><input id="cod" type="password" autocomplete="off" placeholder="Código" onkeydown="if(event.key==='Enter')unlock()"><button class="pri" onclick="unlock()">Entrar</button></div>
+  <p class="msg" id="lmsg"></p>
+</section>
+</div>
+
 <div id="v1">
 <section>
   <h2>Minhas notas</h2>
@@ -122,19 +131,24 @@ async function put(path,val){
   try{localStorage.setItem(K,JSON.stringify(d))}catch(e){}
 }
 async function refresh(){try{const d=await getAll();T={mesas:d.mesas||{},jog:d.jog||{}}}catch(e){}if(cur==2)drawPl();if(cur==3)board()}
-$("modo").textContent=DB_URL?`Sala ${SALA} · conectado ao placar ao vivo`:"Modo local: dados só neste aparelho (configure o Firebase para jogar com todos)";
+$("modo").textContent=DB_URL?`Sala ${SALA} · conectado ao placar ao vivo · v4`:"Modo local: dados só neste aparelho (configure o Firebase para jogar com todos) · v4";
 
 for(let i=1;i<=6;i++){$("pm").add(new Option("Mesa "+i,i));$("mm").add(new Option("Mesa "+i,i))}
 /* Código das abas Mestre e Placar. Troque pelo código que quiser. */
 const CODIGO="LV2026";
 let liberado=sessionStorage.getItem("lv-ok")==="1";
+let pend=2;
+function unlock(){
+  if($("cod").value.trim().toLowerCase()!==CODIGO.toLowerCase()){$("lmsg").textContent="Código incorreto.";return}
+  liberado=true;sessionStorage.setItem("lv-ok","1");$("cod").value="";$("lmsg").textContent="";tab(pend);
+}
 function tab(k){
   if(k>1&&!liberado){
-    const c=prompt("Código do mestre:");
-    if(c===null)return;
-    if(c.trim().toLowerCase()!==CODIGO.toLowerCase()){alert("Código incorreto.");return}
-    liberado=true;sessionStorage.setItem("lv-ok","1");
+    pend=k;clearInterval(timer);
+    [1,2,3].forEach(i=>{$("v"+i).classList.add("hide");$("t"+i).classList.toggle("on",i==k)});
+    $("lock").classList.remove("hide");$("cod").focus();return;
   }
+  $("lock").classList.add("hide");
   cur=k;[1,2,3].forEach(i=>{$("v"+i).classList.toggle("hide",i!=k);$("t"+i).classList.toggle("on",i==k)});clearInterval(timer);if(k>1){refresh();timer=setInterval(refresh,3000)}}
 
 /* Jogador */
