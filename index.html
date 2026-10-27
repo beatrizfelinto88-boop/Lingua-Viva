@@ -125,7 +125,17 @@ async function refresh(){try{const d=await getAll();T={mesas:d.mesas||{},jog:d.j
 $("modo").textContent=DB_URL?`Sala ${SALA} · conectado ao placar ao vivo`:"Modo local: dados só neste aparelho (configure o Firebase para jogar com todos)";
 
 for(let i=1;i<=6;i++){$("pm").add(new Option("Mesa "+i,i));$("mm").add(new Option("Mesa "+i,i))}
-function tab(k){cur=k;[1,2,3].forEach(i=>{$("v"+i).classList.toggle("hide",i!=k);$("t"+i).classList.toggle("on",i==k)});clearInterval(timer);if(k>1){refresh();timer=setInterval(refresh,3000)}}
+/* Código das abas Mestre e Placar. Troque pelo código que quiser. */
+const CODIGO="LV2026";
+let liberado=sessionStorage.getItem("lv-ok")==="1";
+function tab(k){
+  if(k>1&&!liberado){
+    const c=prompt("Código do mestre:");
+    if(c===null)return;
+    if(c.trim().toLowerCase()!==CODIGO.toLowerCase()){alert("Código incorreto.");return}
+    liberado=true;sessionStorage.setItem("lv-ok","1");
+  }
+  cur=k;[1,2,3].forEach(i=>{$("v"+i).classList.toggle("hide",i!=k);$("t"+i).classList.toggle("on",i==k)});clearInterval(timer);if(k>1){refresh();timer=setInterval(refresh,3000)}}
 
 /* Jogador */
 const sel=()=>`<select><option value="">-</option>${[1,2,3,4,5].map(n=>`<option>${n}</option>`).join("")}</select>`;
@@ -138,7 +148,7 @@ function ptot(){
   $("pt").textContent=ok?`Total A: ${sa} · Total B: ${sb} · Você escolheria ${sa>sb?"A":sb>sa?"B":"nenhum (empate)"}`:"";
   return ok?{a:sa,b:sb}:null;
 }
-function pid(){let i=localStorage.getItem("lv-id");if(!i){i=Math.random().toString(36).slice(2,10);localStorage.setItem("lv-id",i)}return i}
+function pid(){let i=sessionStorage.getItem("lv-id");if(!i){i=Math.random().toString(36).slice(2,10)+Date.now().toString(36);sessionStorage.setItem("lv-id",i)}return i}
 async function sendP(){
   const t=ptot();if(!t){$("pmsg").textContent="Preencha as 6 notas antes de enviar.";return}
   const n=$("pm").value;
@@ -167,10 +177,11 @@ function score(n){
 }
 function drawPl(){
   const n=$("mm").value,pl=Object.values(T.jog[n]||{});
-  $("pl").innerHTML=pl.length?pl.map(p=>`<div class="chk">${esc(p.nome||"Jogador")} <span class="tag">A ${p.a} · B ${p.b} · escolhe ${p.a>p.b?"A":p.b>p.a?"B":"-"}</span></div>`).join(""):`<p class="tag">Nenhum jogador enviou notas para esta mesa ainda.</p>`;
+  $("pl").innerHTML=pl.length?Object.entries(T.jog[n]).map(([id,p])=>`<div class="chk">${esc(p.nome||"Jogador")} <span class="tag">A ${p.a} · B ${p.b} · escolhe ${p.a>p.b?"A":p.b>p.a?"B":"-"}</span><button aria-label="Remover jogador" onclick="rem('${n}','${id.replace(/[^a-z0-9]/gi,"")}')">×</button></div>`).join(""):`<p class="tag">Nenhum jogador enviou notas para esta mesa ainda.</p>`;
   const r=score(n);
   $("mres").textContent=pl.length?`Soma A: ${pl.reduce((s,p)=>s+p.a,0)} · Soma B: ${pl.reduce((s,p)=>s+p.b,0)}${r?` · Pontos da mesa: ${r.total} de 8`:""}`:"";
 }
+async function rem(n,id){if(confirm("Remover este jogador da mesa?")){await put(`jog/${n}/${id}`,null);await refresh()}}
 async function sendM(){
   if(!$("dec").value){$("mmsg").textContent="Escolha o candidato da mesa.";return}
   const v=$("vaga").value,n=$("mm").value;
